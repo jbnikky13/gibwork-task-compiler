@@ -1,6 +1,6 @@
 {
   "name": "gibwork-task-compiler",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "AI-powered terminal tool that turns vague developer requests into precise, testable, economically scoped Gibwork tasks.",
   "type": "module",
@@ -12,6 +12,7 @@
     "mcp": "node dist/mcp.js",
     "dev": "tsx src/cli.ts",
     "dev:mcp": "tsx src/mcp.ts",
+    "demo": "npm run build && node scripts/demo.mjs",
     "check": "tsc --noEmit",
     "test": "node --test"
   },
