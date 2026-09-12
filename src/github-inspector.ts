@@ -64,8 +64,9 @@ export async function inspectGitHub(reference: string): Promise<RepoInspection> 
   const parsed = parseReference(reference);
   const repo = await github<Record<string, unknown>>(`/repos/${parsed.owner}/${parsed.repo}`);
   const branch = String(repo.default_branch ?? "main");
-  const contents = await github<Array<Record<string, unknown>>>(`/repos/${parsed.owner}/${parsed.repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`);
-  const paths = contents.filter((item) => item.type === "blob").map((item) => String(item.path)).slice(0, 1500);
+  const treeResponse = await github<Record<string, unknown>>(`/repos/${parsed.owner}/${parsed.repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`);
+  const tree = Array.isArray(treeResponse.tree) ? treeResponse.tree as Array<Record<string, unknown>> : [];
+  const paths = tree.filter((item) => item.type === "blob").map((item) => String(item.path)).slice(0, 1500);
 
   let issue: RepoInspection["issue"];
   if (parsed.issue) {
