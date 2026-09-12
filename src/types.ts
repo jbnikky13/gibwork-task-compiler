@@ -1,3 +1,27 @@
+export interface TaskContract {
+  version: "0.1";
+  objective: string;
+  requirements: string[];
+  acceptanceCriteria: string[];
+  constraints: string[];
+  evidenceRequired: string[];
+  likelyAreas: string[];
+  estimatedEffortHours: { min: number; max: number };
+  recommendedReward: { min: number; max: number; currency: string };
+  ambiguityScore: number;
+  readiness: "READY" | "REVIEW" | "NEEDS_CLARIFICATION";
+  source: {
+    type: "request" | "github-issue";
+    reference?: string;
+  };
+}
+
+export interface CompileOptions {
+  request: string;
+  reference?: string;
+  currency?: string;
+}
+
 export interface Bounty {
   id: string;
   title: string;
