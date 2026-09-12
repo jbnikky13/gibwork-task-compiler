@@ -21,9 +21,24 @@ export interface CompileOptions {
   currency?: string;
 }
 
+export interface RepoInspection {
+  owner: string;
+  repo: string;
+  defaultBranch: string;
+  description?: string;
+  language?: string;
+  stars: number;
+  openIssues: number;
+  recentFiles: string[];
+  testFiles: string[];
+  relevantFiles: string[];
+  issue?: { number: number; title: string; body: string; state: string; labels: string[] };
+}
+
 export interface SimulationResult {
-  version: "0.1";
+  version: "0.2";
   objective: string;
+  repository?: { owner: string; repo: string; defaultBranch: string; language?: string; stars: number; openIssues: number };
   executionPlan: string[];
   likelyFiles: string[];
   likelyTests: string[];
