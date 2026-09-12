@@ -25,6 +25,12 @@ Gibwork provides the work marketplace and developer infrastructure. The missing 
 
 Gibwork Task Compiler fills that gap from outside the browser. It can inspect public GitHub repositories, simulate execution, validate the resulting contract, preview the exact task payload, and publish only after explicit confirmation.
 
+## Why this is different
+
+This is not another bounty marketplace, bounty finder, or generic AI task generator.
+
+The compiler acts as a **quality gate before work becomes a paid Gibwork task**. It combines repository evidence, deterministic validation, economic estimation, and optional AI reasoning while keeping publication behind an explicit human confirmation boundary.
+
 ## Core workflow
 
 ```text
@@ -37,6 +43,8 @@ GitHub issue / rough request
      Task Contract
           ↓
      SIMULATE
+          ↓
+   AI REASONING (optional)
           ↓
       VALIDATE
           ↓
@@ -93,6 +101,16 @@ gibwork publish --contract task.json --confirm
 
 Publishing requires `SOLANA_PRIVATE_KEY` and never accepts a private key as a command-line argument.
 
+## One-command judge demo
+
+Run the safe end-to-end demonstration locally:
+
+```bash
+npm run demo
+```
+
+The demo exercises compilation, GitHub inspection, simulation, validation, and publishing preview. It **does not create or fund a live Gibwork task**.
+
 ## MCP server
 
 The same workflow is available to MCP-compatible AI clients such as coding agents.
@@ -108,6 +126,7 @@ Available tools:
 - `compile_task` — request → Task Contract
 - `inspect_repository` — GitHub repository/issue → source and test evidence
 - `simulate_task` — contract → execution forecast
+- `reason_task` — contract + repository evidence → deeper implementation reasoning
 - `validate_task` — contract + evidence → readiness decision
 - `preview_gibwork_task` — contract → exact publish payload
 - `publish_gibwork_task` — publish a READY contract, only when `confirmation=true`
@@ -156,7 +175,7 @@ PUBLISH
 
 ## Design principles
 
-- **Human approval first:** compiling, simulating, and validating never publish automatically.
+- **Human approval first:** compiling, simulating, reasoning, and validating never publish automatically.
 - **Testable work:** important requirements need observable acceptance evidence.
 - **Repository-aware:** real source and test content is used when repository context is available.
 - **Economic realism:** effort and reward are estimated together.
@@ -175,18 +194,27 @@ PUBLISH
 - [x] Task ambiguity/readiness scoring
 - [x] Effort and reward simulation
 - [x] Repository source/test evidence inspection
-- [x] `gibwork validate` contract validation
 - [x] `gibwork simulate` worker execution forecast
+- [x] `gibwork validate` contract validation
 - [x] Human-approved Gibwork publishing
 - [x] Native MCP server
+- [x] One-command safe demo
+- [x] Optional AI reasoning adapter
 - [ ] End-to-end live task demonstration
-- [ ] LLM reasoning adapter for deeper repository analysis
+- [ ] MCP client walkthrough recording
 
 ## Environment
 
 Node.js 22+ is required.
 
 For GitHub API access to public repositories, no token is required for basic usage. A `GITHUB_TOKEN` can be supplied when higher API limits or private-repository support is appropriate.
+
+For optional AI reasoning:
+
+```bash
+GIBWORK_AI_API_KEY=...
+GIBWORK_AI_MODEL=gemini-2.5-flash
+```
 
 For publishing:
 
