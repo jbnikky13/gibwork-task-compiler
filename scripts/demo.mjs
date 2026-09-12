@@ -6,7 +6,7 @@ rmSync(demoDir, { recursive: true, force: true });
 mkdirSync(demoDir, { recursive: true });
 
 const request = "Fix the authentication callback so users stay signed in after OAuth login and add a regression test for session persistence.";
-const reference = "https://github.com/jbnikky13/gibwork-task-compiler/issues/1";
+const reference = "https://github.com/jbnikky13/gibwork-task-compiler";
 const contractFile = `${demoDir}/task.json`;
 const simulationFile = `${demoDir}/simulation.json`;
 
