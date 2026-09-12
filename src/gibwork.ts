@@ -4,7 +4,7 @@ import type { Bounty } from "./types.js";
 function client() {
   const privateKey = process.env.SOLANA_PRIVATE_KEY;
   if (!privateKey) {
-    throw new Error("SOLANA_PRIVATE_KEY is required. Bounty Autopilot never accepts a private key as a CLI argument.");
+    throw new Error("SOLANA_PRIVATE_KEY is required for Gibwork API operations. Never pass a private key as a CLI argument.");
   }
   return createGibworkClient({ privateKey, production: process.env.GIBWORK_ENVIRONMENT === "production" });
 }
@@ -13,7 +13,7 @@ function normalizeTask(task: any): Bounty {
   const reward = Number(task?.payment?.amount ?? task?.reward ?? task?.amount ?? 0);
   return {
     id: String(task?.taskId ?? task?.id ?? "unknown"),
-    title: String(task?.title ?? "Untitled bounty"),
+    title: String(task?.title ?? "Untitled task"),
     description: String(task?.content ?? task?.description ?? ""),
     reward: Number.isFinite(reward) ? reward : 0,
     currency: String(task?.payment?.symbol ?? task?.asset?.symbol ?? "USDC"),
@@ -24,6 +24,10 @@ function normalizeTask(task: any): Bounty {
   };
 }
 
+/**
+ * Gibwork adapter retained for the publishing/integration phase.
+ * The compiler itself does not need a wallet and never publishes automatically.
+ */
 export async function listBounties(): Promise<Bounty[]> {
   const result: any = await client().tasks.list();
   const items = Array.isArray(result) ? result : result?.tasks ?? result?.results ?? result?.data ?? [];
