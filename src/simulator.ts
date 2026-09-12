@@ -24,13 +24,19 @@ function heuristicTests(contract: TaskContract): string[] {
   return [...new Set(tests)];
 }
 
+function contentEvidence(inspection: RepoInspection): string[] {
+  return inspection.fileInsights.flatMap((file) => file.signals.map((signal) => `${file.path}: ${signal}`)).slice(0, 10);
+}
+
 export function simulateTask(contract: TaskContract, inspection?: RepoInspection): SimulationResult {
   const base = (contract.estimatedEffortHours.min + contract.estimatedEffortHours.max) / 2;
   const repoFiles = inspection?.relevantFiles ?? [];
   const testFiles = inspection?.testFiles ?? [];
+  const insights = inspection?.fileInsights ?? [];
   const likelyFiles = repoFiles.length ? repoFiles.slice(0, 12) : heuristicFiles(contract);
   const likelyTests = testFiles.length ? testFiles.slice(0, 12) : heuristicTests(contract);
-  const likely = round(base + (inspection && repoFiles.length > 8 ? 0.5 : 0));
+  const codeEvidence = inspection ? contentEvidence(inspection) : [];
+  const likely = round(base + (insights.length > 8 ? 0.5 : 0) + (insights.some((x) => x.signals.includes("touches persistence/database concepts")) ? 0.25 : 0));
   const min = Math.max(0.5, round(contract.estimatedEffortHours.min * 0.9));
   const max = Math.max(likely + 0.5, round(contract.estimatedEffortHours.max * (inspection ? 1.1 : 1.15)));
   const blockers: string[] = [];
@@ -41,11 +47,13 @@ export function simulateTask(contract: TaskContract, inspection?: RepoInspection
   if (inspection?.issue?.state === "closed") blockers.push("Referenced GitHub issue is closed.");
   if (inspection && inspection.testFiles.length === 0) scopeRisks.push("No recognizable test files were found in the repository tree.");
   if (inspection && inspection.openIssues > 50) scopeRisks.push(`Repository has ${inspection.openIssues} open issues; maintenance complexity may be higher than the task suggests.`);
+  if (inspection && insights.length === 0) scopeRisks.push("Relevant source content could not be read; simulation relies on repository paths only.");
+  if (insights.some((x) => x.signals.includes("content truncated for analysis"))) scopeRisks.push("At least one relevant file exceeded the analysis size limit and was truncated.");
   if (contract.requirements.length === 1) scopeRisks.push("Single high-level requirement may hide additional implementation work.");
   if (!inspection) scopeRisks.push("Estimated files and effort are heuristic until repository inspection is available.");
 
-  const confidence = Math.max(35, Math.min(96,
-    82 - contract.ambiguityScore * 0.3 + (inspection ? 15 : 0) + (repoFiles.length ? 4 : 0) + (testFiles.length ? 3 : 0) - blockers.length * 8,
+  const confidence = Math.max(35, Math.min(97,
+    82 - contract.ambiguityScore * 0.3 + (inspection ? 15 : 0) + (repoFiles.length ? 4 : 0) + (testFiles.length ? 3 : 0) + (insights.length ? 5 : 0) - blockers.length * 8,
   ));
   const rewardMin = Math.ceil(min * 30 / 5) * 5;
   const rewardRecommended = Math.ceil(likely * 38 / 5) * 5;
@@ -56,19 +64,12 @@ export function simulateTask(contract: TaskContract, inspection?: RepoInspection
   else if (contract.readiness === "REVIEW" || confidence < 75 || !inspection) recommendation = "REVIEW";
 
   return {
-    version: "0.2",
+    version: "0.3",
     objective: contract.objective,
-    repository: inspection ? {
-      owner: inspection.owner,
-      repo: inspection.repo,
-      defaultBranch: inspection.defaultBranch,
-      language: inspection.language,
-      stars: inspection.stars,
-      openIssues: inspection.openIssues,
-    } : undefined,
+    repository: inspection ? { owner: inspection.owner, repo: inspection.repo, defaultBranch: inspection.defaultBranch, language: inspection.language, stars: inspection.stars, openIssues: inspection.openIssues } : undefined,
     executionPlan: [
       inspection ? `Inspect ${inspection.owner}/${inspection.repo} on ${inspection.defaultBranch}.` : "Read the repository and issue context.",
-      "Identify the smallest set of files/components required for the requested behavior.",
+      insights.length ? `Review ${insights.length} relevant source/test files and use their code signals to constrain the implementation scope.` : "Identify the smallest set of files/components required for the requested behavior.",
       "Implement the change without modifying unrelated functionality.",
       "Run existing tests and add regression/acceptance coverage where needed.",
       "Capture evidence for every acceptance criterion before submission.",
@@ -77,6 +78,7 @@ export function simulateTask(contract: TaskContract, inspection?: RepoInspection
     likelyTests,
     blockers,
     scopeRisks,
+    codeEvidence,
     effort: { min, likely, max },
     reward: { min: rewardMin, recommended: rewardRecommended, max: rewardMax, currency: contract.recommendedReward.currency },
     confidence: Math.round(confidence),
