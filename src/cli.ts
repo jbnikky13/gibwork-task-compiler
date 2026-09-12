@@ -2,11 +2,12 @@
 import { readFileSync } from "node:fs";
 import { Command } from "commander";
 import { compileTask } from "./compiler.js";
+import { inspectGitHub } from "./github-inspector.js";
 import { simulateTask } from "./simulator.js";
 import type { TaskContract } from "./types.js";
 
 const program = new Command();
-program.name("gibwork").description("Compile and simulate precise, testable Gibwork tasks").version("0.1.0");
+program.name("gibwork").description("Compile and simulate precise, testable Gibwork tasks").version("0.2.0");
 
 function loadContract(file: string): TaskContract {
   return JSON.parse(readFileSync(file, "utf8")) as TaskContract;
@@ -15,7 +16,7 @@ function loadContract(file: string): TaskContract {
 program.command("compile")
   .description("Compile a developer request into a structured Gibwork Task Contract")
   .requiredOption("--request <request>", "rough task, issue, or developer request")
-  .option("--reference <reference>", "GitHub issue URL, issue number, or other source reference")
+  .option("--reference <reference>", "GitHub repository or issue URL")
   .option("--currency <currency>", "reward currency", "USDC")
   .option("--json", "output the Task Contract as JSON")
   .action((options) => {
@@ -35,20 +36,28 @@ program.command("compile")
   });
 
 program.command("simulate")
-  .description("Simulate how a worker would execute a compiled Task Contract")
+  .description("Simulate execution, optionally inspecting a real GitHub repository")
   .requiredOption("--contract <file>", "Task Contract JSON file")
+  .option("--reference <reference>", "GitHub repository or issue URL to inspect")
   .option("--json", "output machine-readable JSON")
-  .action((options) => {
+  .action(async (options) => {
     try {
-      const result = simulateTask(loadContract(options.contract));
-      if (options.json) return console.log(JSON.stringify(result, null, 2));
+      const contract = loadContract(options.contract);
+      const reference = options.reference ?? contract.source.reference;
+      const inspection = reference ? await inspectGitHub(reference) : undefined;
+      const result = simulateTask(contract, inspection);
+      if (options.json) return console.log(JSON.stringify({ ...result, inspection }, null, 2));
       console.log("\n🧪 GIBWORK TASK SIMULATION\n");
+      if (inspection) {
+        console.log(`REPOSITORY\n${inspection.owner}/${inspection.repo} · ${inspection.language ?? "unknown language"} · ${inspection.stars} stars · ${inspection.openIssues} open issues\n`);
+        if (inspection.issue) console.log(`ISSUE\n#${inspection.issue.number} ${inspection.issue.title} · ${inspection.issue.state}\n`);
+      }
       console.log(`OBJECTIVE\n${result.objective}\n`);
       console.log("EXECUTION PLAN"); result.executionPlan.forEach((x, i) => console.log(`${i + 1}. ${x}`)); console.log();
       console.log("LIKELY FILES"); result.likelyFiles.forEach((x) => console.log(`• ${x}`)); console.log();
       console.log("LIKELY TESTS"); result.likelyTests.forEach((x) => console.log(`• ${x}`)); console.log();
       console.log("BLOCKERS"); (result.blockers.length ? result.blockers : ["None detected."]).forEach((x) => console.log(`• ${x}`)); console.log();
-      console.log("SCOPE RISKS"); result.scopeRisks.forEach((x) => console.log(`• ${x}`)); console.log();
+      console.log("SCOPE RISKS"); (result.scopeRisks.length ? result.scopeRisks : ["None detected."]).forEach((x) => console.log(`• ${x}`)); console.log();
       console.log(`EFFORT\n${result.effort.min}–${result.effort.max} hours (likely ${result.effort.likely}h)\n`);
       console.log(`RECOMMENDED REWARD\n${result.reward.currency} ${result.reward.min}–${result.reward.max} (recommended ${result.reward.recommended})\n`);
       console.log(`CONFIDENCE\n${result.confidence}%\nRECOMMENDATION\n${result.recommendation}\n`);
