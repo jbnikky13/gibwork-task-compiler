@@ -21,6 +21,14 @@ export interface CompileOptions {
   currency?: string;
 }
 
+export interface RepoFileInsight {
+  path: string;
+  size: number;
+  language?: string;
+  content: string;
+  signals: string[];
+}
+
 export interface RepoInspection {
   owner: string;
   repo: string;
@@ -32,11 +40,12 @@ export interface RepoInspection {
   recentFiles: string[];
   testFiles: string[];
   relevantFiles: string[];
+  fileInsights: RepoFileInsight[];
   issue?: { number: number; title: string; body: string; state: string; labels: string[] };
 }
 
 export interface SimulationResult {
-  version: "0.2";
+  version: "0.3";
   objective: string;
   repository?: { owner: string; repo: string; defaultBranch: string; language?: string; stars: number; openIssues: number };
   executionPlan: string[];
@@ -44,6 +53,7 @@ export interface SimulationResult {
   likelyTests: string[];
   blockers: string[];
   scopeRisks: string[];
+  codeEvidence: string[];
   effort: { min: number; likely: number; max: number };
   reward: { min: number; recommended: number; max: number; currency: string };
   confidence: number;
