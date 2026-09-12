@@ -1,11 +1,11 @@
 {
-  "name": "bounty-autopilot",
+  "name": "gibwork-task-compiler",
   "version": "0.1.0",
   "private": true,
-  "description": "AI-powered terminal agent for discovering, evaluating, and preparing developer bounties.",
+  "description": "AI-powered terminal tool that turns vague developer requests into precise, testable, economically scoped Gibwork tasks.",
   "type": "module",
   "engines": { "node": ">=22" },
-  "bin": { "bounty": "dist/cli.js" },
+  "bin": { "gibwork": "dist/cli.js" },
   "scripts": {
     "build": "tsc",
     "start": "node dist/cli.js",
