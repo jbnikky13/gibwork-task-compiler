@@ -1,79 +1,119 @@
-# Bounty Autopilot
+# Gibwork Task Compiler
 
-> Turn developer bounties into decisions, not endless scrolling.
+> Turn vague GitHub work into precise, testable, economically scoped Gibwork tasks.
 
-Bounty Autopilot is an AI-assisted terminal tool for discovering Gibwork opportunities and ranking them by **skill fit, estimated effort, success probability, and expected value per hour**.
+Gibwork Task Compiler is a terminal-first AI developer tool that transforms an issue, request, or repository change into a structured **Task Contract** ready for Gibwork.
+
+Instead of asking a worker to interpret a vague request, the compiler produces:
+
+- a clear objective
+- explicit requirements
+- testable acceptance criteria
+- likely files and implementation areas
+- a validation/test plan
+- constraints and exclusions
+- estimated effort
+- recommended reward range
+- ambiguity and readiness scores
+
+The goal is simple: **make work easier to understand before it becomes a paid task.**
 
 ## Why it exists
 
-Gibwork already provides a marketplace for paid work. Developers still have to manually scan tasks, judge whether they fit their skills, estimate the effort, and decide which opportunity is actually worth pursuing. Gibwork's developer workflow is built around finding a bounty, starting work, using a `gib-` branch, and submitting a pull request. Bounty Autopilot turns the discovery and decision stage into an agent-friendly terminal workflow.
+Gibwork is an onchain work marketplace for getting real tasks completed. The marketplace already supports development work such as bug fixes, API integrations, unit tests, research, content, design, and other paid requests. citeturn0search0
 
-## MVP
+The missing layer is task preparation: turning an informal request into a specification that a worker—or an AI agent—can execute and verify without repeated clarification.
+
+Gibwork Task Compiler is designed to fill that gap from outside the browser, using Gibwork's developer tooling as the execution layer.
+
+## Core workflow
 
 ```text
-Gibwork tasks
-     ↓
-Normalize opportunities
-     ↓
-Skill + effort analysis
-     ↓
-Expected-value scoring
-     ↓
-Rank the best opportunities
-     ↓
-Human chooses what to execute
+GitHub issue / rough request
+          ↓
+   Repository context
+          ↓
+   Task Compiler
+          ↓
+ ┌────────┼─────────┐
+ ▼        ▼         ▼
+Scope   Tests    Economics
+ └────────┼─────────┘
+          ↓
+     Task Contract
+          ↓
+   Validate / simulate
+          ↓
+      Human review
+          ↓
+     Gibwork task
 ```
 
-### Example
+## Example
 
 ```bash
 npm install
 npm run build
-SOLANA_PRIVATE_KEY='...' node dist/cli.js hunt
+npm start -- compile --request "Fix the OAuth callback bug in this repository"
 ```
 
-Or during development:
-
-```bash
-npm run dev -- hunt --skills "TypeScript,MCP,GitHub,AI" --min-reward 25
-```
-
-The CLI produces a shortlist like:
+The compiler is intended to produce a result like:
 
 ```text
-🔎 BOUNTY AUTOPILOT — GIBWORK HUNT
+🧩 GIBWORK TASK COMPILER
 
-1. Build an MCP integration
-   USDC 125.00 · 96% skill match · ~2h
-   Expected value: USDC 73.50/hr · Risk: LOW
-   matches: mcp, integration, github · meets minimum reward
+OBJECTIVE
+Fix the OAuth callback failure and preserve existing session behavior.
 
-2. Fix GitHub API bug
-   USDC 75.00 · 92% skill match · ~1.25h
-   Expected value: USDC 55.20/hr · Risk: LOW
+REQUIREMENTS
+✓ Reproduce the callback failure
+✓ Correct callback state handling
+✓ Preserve existing session creation
+✓ Add regression coverage
+
+ACCEPTANCE CRITERIA
+✓ OAuth callback succeeds with a valid state
+✓ Invalid state is rejected
+✓ Existing auth tests remain green
+✓ New regression test passes
+
+ESTIMATED EFFORT
+1.5–2.5 hours
+
+RECOMMENDED REWARD
+USDC 60–100
+
+AMBIGUITY
+LOW
+
+READINESS
+READY TO REVIEW
 ```
 
 ## Design principles
 
-- **Human approval first:** the MVP does not autonomously spend funds or submit work.
-- **Wallet stays local:** credentials are supplied through the environment and are never accepted as a CLI argument.
-- **Machine-readable:** `--json` makes the output usable by other agents and automation.
-- **Gibwork-native:** the project uses the official Gibwork SDK rather than scraping the marketplace.
-- **Outside the browser:** the primary interface is the terminal, with MCP planned as the next integration layer.
+- **Human approval first:** compiling a task does not publish or fund anything automatically.
+- **Testable work:** every important requirement should have observable acceptance evidence.
+- **Repository-aware:** when repository context is available, the compiler uses it to make the task concrete.
+- **Economic realism:** effort and reward are estimated together instead of treating the bounty amount in isolation.
+- **Machine-readable:** Task Contracts are structured for CLI automation and future MCP clients.
+- **Gibwork-native:** the project uses the official Gibwork SDK instead of scraping the marketplace.
+- **Outside the browser:** the primary interface is the terminal, with MCP planned as a first-class integration.
 
 ## Roadmap
 
-- [x] Gibwork SDK task discovery
-- [x] Skill-fit scoring
-- [x] Effort estimation
-- [x] Expected-value ranking
-- [x] JSON output for agents
-- [ ] `bounty analyze <id>` repository/task analysis
-- [ ] GitHub workspace + `gib-` branch preparation
-- [ ] Validation and proof-package generation
+- [x] Repository renamed and project direction established
+- [x] Gibwork SDK foundation
+- [ ] `gibwork compile` request → Task Contract
+- [ ] GitHub issue/repository context ingestion
+- [ ] Requirement and acceptance-criteria extraction
+- [ ] Task ambiguity/readiness scoring
+- [ ] Effort and reward simulation
+- [ ] `gibwork validate-task` contract validation
+- [ ] `gibwork simulate` worker execution forecast
+- [ ] Human-approved Gibwork publishing
 - [ ] Native MCP server
-- [ ] Human-approved execution mode
-- [ ] Telegram bounty radar
+- [ ] Example end-to-end Gibwork task
 
 ## Environment
 
@@ -88,7 +128,7 @@ Use a dedicated development wallet while testing. Never commit a private key or 
 
 ## Hackathon
 
-Built for the **Gibwork Developer Hackathon**: a new developer-focused use case for Gibwork using its SDK, with terminal-first and MCP-first workflows.
+Built for the **Gibwork Developer Hackathon**: a developer-tool use case that turns unstructured work requests into precise, testable Gibwork tasks using the SDK, with terminal-first and MCP-first workflows.
 
 ## License
 
