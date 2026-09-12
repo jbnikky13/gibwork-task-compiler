@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
 import { Command } from "commander";
 import { compileTask } from "./compiler.js";
 import { simulateTask } from "./simulator.js";
@@ -8,8 +9,7 @@ const program = new Command();
 program.name("gibwork").description("Compile and simulate precise, testable Gibwork tasks").version("0.1.0");
 
 function loadContract(file: string): TaskContract {
-  const fs = require("node:fs");
-  return JSON.parse(fs.readFileSync(file, "utf8")) as TaskContract;
+  return JSON.parse(readFileSync(file, "utf8")) as TaskContract;
 }
 
 program.command("compile")
