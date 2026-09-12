@@ -1,5 +1,5 @@
 import { createGibworkClient } from "@gibwork/sdk/node";
-import type { Bounty } from "./types.js";
+import type { Bounty, TaskContract } from "./types.js";
 
 function client() {
   const privateKey = process.env.SOLANA_PRIVATE_KEY;
@@ -24,12 +24,73 @@ function normalizeTask(task: any): Bounty {
   };
 }
 
-/**
- * Gibwork adapter retained for the publishing/integration phase.
- * The compiler itself does not need a wallet and never publishes automatically.
- */
 export async function listBounties(): Promise<Bounty[]> {
   const result: any = await client().tasks.list();
   const items = Array.isArray(result) ? result : result?.tasks ?? result?.results ?? result?.data ?? [];
   return items.map(normalizeTask).filter((task: Bounty) => task.id !== "unknown" && task.reward > 0);
+}
+
+export interface PublishOptions {
+  dryRun?: boolean;
+}
+
+export interface PublishPreview {
+  title: string;
+  description: string;
+  reward: { amount: number; currency: string };
+  requirements: string[];
+  acceptanceCriteria: string[];
+  evidenceRequired: string[];
+  sourceReference?: string;
+}
+
+export function buildPublishPreview(contract: TaskContract): PublishPreview {
+  const description = [
+    contract.objective,
+    "",
+    "Requirements:",
+    ...contract.requirements.map((x) => `- ${x}`),
+    "",
+    "Acceptance criteria:",
+    ...contract.acceptanceCriteria.map((x) => `- ${x}`),
+    "",
+    "Evidence required:",
+    ...contract.evidenceRequired.map((x) => `- ${x}`),
+    "",
+    "Constraints:",
+    ...contract.constraints.map((x) => `- ${x}`),
+  ].join("\n");
+
+  return {
+    title: contract.objective.replace(/[.!?]+$/, "").slice(0, 100),
+    description,
+    reward: {
+      amount: contract.recommendedReward.min,
+      currency: contract.recommendedReward.currency,
+    },
+    requirements: contract.requirements,
+    acceptanceCriteria: contract.acceptanceCriteria,
+    evidenceRequired: contract.evidenceRequired,
+    sourceReference: contract.source.reference,
+  };
+}
+
+/**
+ * Publishing is intentionally explicit. This function is only called after
+ * the user confirms a validated contract. The SDK API shape can vary by SDK
+ * version, so the adapter keeps the publish boundary isolated here.
+ */
+export async function publishTask(contract: TaskContract): Promise<unknown> {
+  const api: any = client();
+  const preview = buildPublishPreview(contract);
+  const tasks = api.tasks;
+  if (!tasks?.create) {
+    throw new Error("Installed Gibwork SDK does not expose tasks.create; update the SDK adapter before publishing.");
+  }
+
+  return tasks.create({
+    title: preview.title,
+    content: preview.description,
+    payment: { amount: preview.reward.amount, symbol: preview.reward.currency },
+  });
 }
