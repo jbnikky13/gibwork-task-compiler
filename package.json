@@ -1,6 +1,6 @@
 {
   "name": "gibwork-task-compiler",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "AI-powered terminal tool that turns vague developer requests into precise, testable, economically scoped Gibwork tasks.",
   "type": "module",
